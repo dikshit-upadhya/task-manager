@@ -6,7 +6,7 @@ const {router:taskRouter} = require('./routers/task')
 const bcrypt = require('bcryptjs')
 
 const app = express()
-const port = process.env.PORT || 3000
+const port = process.env.PORT 
 
 app.use(express.json())
 app.use(userRouter)
@@ -19,4 +19,6 @@ app.get('',(req, res) => {
 
 app.listen(port , () => {
     console.log('The server is up on port ' + port)
+    console.log(process.env.PORT)
+    console.log(process.env.JSON_SECRET_MESSAGE)
 })

@@ -29,7 +29,7 @@ router.post('/user',  async (req, res) => {
     
     try {
         await user.save()
-        sendWelcomeEmail(req.user.email, req.user.name)
+        sendWelcomeEmail(req.body.email, req.body.name)
         const token = await user.generateToken()
         res.status(201).send({user, token})
     } catch (e) {

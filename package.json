@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.js"
+    "dev": "./node_modules/.bin/env-cmd -f ./config/dev.env nodemon src/index.js"
   },
   "author": "",
   "license": "ISC",
@@ -20,5 +20,8 @@
     "nodemon": "^2.0.2",
     "sharp": "^0.24.0",
     "validator": "^12.1.0"
+  },
+  "devDependencies": {
+    "env-cmd": "^10.0.1"
   }
 }
