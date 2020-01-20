@@ -47,8 +47,12 @@ var userSchema = new mongoose.Schema({
             type:String, 
             required:true
         }
-    }]
-
+    }],
+    avatars: {
+        type: Buffer
+    }
+},{
+    timestamps: true
 })
 
 userSchema.plugin(uniqueValidator)
@@ -96,7 +100,7 @@ userSchema.pre('remove', async function (next)  {
     await Tasks.deleteMany( { owner: user._id } )
     next()
 })
-
+ 
 const User = mongoose.model('user',userSchema)
 
 module.exports = {

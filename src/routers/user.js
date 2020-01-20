@@ -3,8 +3,12 @@ const {User} = require('../model/user.js')
 const jwt = require('jsonwebtoken')
 const {auth} = require('../auth/auth')
 const router = new express.Router()
+const multer = require('multer')
+const sharp = require('sharp')
+const {sendWelcomeEmail, sendCancelationEmail} = require('../emails/emails')
 
-router.post('/user/login', async ( req, res) => {
+
+router.post('/user/login', async ( req, res) => {    
     console.log(req.body)
     try {
         const user = await User.findByCredentials( req.body.email, req.body.password )
@@ -25,6 +29,7 @@ router.post('/user',  async (req, res) => {
     
     try {
         await user.save()
+        sendWelcomeEmail(req.user.email, req.user.name)
         const token = await user.generateToken()
         res.status(201).send({user, token})
     } catch (e) {
@@ -61,6 +66,7 @@ router.get('/user/me', auth, async (req,res) => {
 router.delete('/user/me', auth, async (req, res) => {
     try {
         console.log(req.body)
+        sendCancelationEmail(req.user.email, req.user.name)
         const deletedUser = await req.user.remove()
         console.log(deletedUser)
         if(!deletedUser) {
@@ -71,6 +77,7 @@ router.delete('/user/me', auth, async (req, res) => {
         res.status(400).send(error)
     }
 })
+
 
 router.post('/user/me/logout', auth, async (req, res) =>  {
     // console.log(req.token)
@@ -92,6 +99,58 @@ router.post('/user/me/logoutAll', auth , async (req, res) => {
         res.send('Successfully logged out of all the sessions!')
     } catch ( error ) {
         res.status(400).send('Could not log out of all the sessions')
+    }
+})
+
+const avatar = multer({
+    limits: {
+        fileSize: 1000000
+    },  
+    fileFilter(req, file , cb){
+        if(!file.originalname.match(/\.(jpg|jpeg|png|JPG|JPEG|PNG)$/)){
+            return cb(new Error('File type not supported'))
+        }
+        cb(undefined, true)
+    }
+})
+
+router.post('/user/me/avatar', auth ,  avatar.single('avatar') , async (req, res) => {
+    try {
+        const buffer = await sharp(req.file.buffer).resize({height: 250, width: 250}).png().toBuffer()
+        req.user.avatars = buffer
+        await req.user.save()
+        res.send("successful")
+    } catch (error) {
+        res.status(400).send(error)
+    }
+}, (error, req, res, next) =>{
+    res.status(400).send({
+        error: error.message
+    })
+})
+
+router.get('/user/:id/avatar', async (req, res) => {
+    try{
+        const user = await User.findById(req.params.id)
+        if(!user || !user.avatars) {
+            throw new Error()
+        }
+        res.set('Content-Type', 'image/png')
+        res.send(user.avatars)
+    } catch(error) {
+        res.status(404).send('this page cannot be found')
+    }
+
+})
+
+router.delete('/user/me/avatar', auth, async (req, res) => {
+    try {
+        req.user.avatars = undefined
+        await req.user.save()
+        res.send()
+    } catch (error) {
+        res.status(400).send(error)
+        throw new Error(error)
     }
 })
 
